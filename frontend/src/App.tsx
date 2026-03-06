@@ -1,7 +1,10 @@
 import { useState, useEffect, useReducer, FormEvent } from 'react'
+import Dashboard from './Dashboard'
 import './App.css'
 
 const STORAGE_KEY = 'api_key'
+
+type Page = 'items' | 'dashboard'
 
 interface Item {
   id: number
@@ -37,6 +40,7 @@ function App() {
     () => localStorage.getItem(STORAGE_KEY) ?? '',
   )
   const [draft, setDraft] = useState('')
+  const [currentPage, setCurrentPage] = useState<Page>('items')
   const [fetchState, dispatch] = useReducer(fetchReducer, { status: 'idle' })
 
   useEffect(() => {
@@ -71,6 +75,10 @@ function App() {
     setDraft('')
   }
 
+  function handleNavigate(page: Page) {
+    setCurrentPage(page)
+  }
+
   if (!token) {
     return (
       <form className="token-form" onSubmit={handleConnect}>
@@ -90,36 +98,56 @@ function App() {
   return (
     <div>
       <header className="app-header">
-        <h1>Items</h1>
-        <button className="btn-disconnect" onClick={handleDisconnect}>
-          Disconnect
-        </button>
+        <h1>{currentPage === 'items' ? 'Items' : 'Dashboard'}</h1>
+        <nav className="app-nav">
+          <button
+            className={currentPage === 'items' ? 'active' : ''}
+            onClick={() => handleNavigate('items')}
+          >
+            Items
+          </button>
+          <button
+            className={currentPage === 'dashboard' ? 'active' : ''}
+            onClick={() => handleNavigate('dashboard')}
+          >
+            Dashboard
+          </button>
+          <button className="btn-disconnect" onClick={handleDisconnect}>
+            Disconnect
+          </button>
+        </nav>
       </header>
 
-      {fetchState.status === 'loading' && <p>Loading...</p>}
-      {fetchState.status === 'error' && <p>Error: {fetchState.message}</p>}
+      {currentPage === 'dashboard' ? (
+        <Dashboard />
+      ) : (
+        <>
+          {fetchState.status === 'loading' && <p>Loading...</p>}
+          {fetchState.status === 'error' && <p>Error: {fetchState.message}</p>}
 
-      {fetchState.status === 'success' && (
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>ItemType</th>
-              <th>Title</th>
-              <th>Created at</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fetchState.items.map((item) => (
-              <tr key={item.id}>
-                <td>{item.id}</td>
-                <td>{item.type}</td>
-                <td>{item.title}</td>
-                <td>{item.created_at}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+          {fetchState.status === 'success' && (
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>ItemType</th>
+                  <th>Title</th>
+                  <th>Created at</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fetchState.items.map((item) => (
+                  <tr key={item.id}>
+                    <td>{item.id}</td>
+                    <td>{item.type}</td>
+                    <td>{item.title}</td>
+                    <td>{item.created_at}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </>
       )}
     </div>
   )
